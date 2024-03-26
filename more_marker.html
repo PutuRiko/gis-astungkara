@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html style="height:100%;">
+
+<head>
+    <title>Contoh Peta Leaflet</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+         <!-- Make sure you put this AFTER Leaflet's CSS -->
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+         html, body {
+            height: 100%;
+            margin-top: 50px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #map-container {
+            position: absolute;
+            top: 50px;
+            bottom: 0;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #mapid {
+            height: calc(100% - 80px);
+        }
+
+        .leaflet-popup-content {
+            width: 250px;
+            height: 100px;
+        }
+
+        .col {
+            float: left;
+            width: 50%;
+        }
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #333; 
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1001;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd; 
+            color: black; 
+        }
+    </style>
+</head>
+
+<body style="height:100%; margin:0;">
+    <nav class="navbar">
+        <a href="/mapmarker">Map and Marker</a>
+        <a href="/moremarker">More Marker</a>
+        <a href="/markercluster">Marker Cluster</a>
+        <a href="/polyline">Polyline</a>
+        <a href="/routing">Routing</a>
+    </nav>
+    <div id="map-container">
+        <div id="mapid"></div>
+    </div>
+    <button id="btnKirim">Simpan</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.js"></script>
+    <script>
+        var mymap = L.map('mapid').setView([-8.4095188, 115.188919], 11);
+
+        var defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+            maxZoom: 18,
+        }).addTo(mymap);
+
+        var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        var baseLayers = {
+            "Default": defaultLayer,
+            "Satelit": satelliteLayer
+        };
+
+        var markers = [];
+        var isOnDrag = false;
+
+        var myIcon = L.icon({
+            iconUrl: 'pin.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+        });
+
+        formatContent = function(lat, lng, index) {
+            return `
+                <div class="wrapper">
+                    <div class="row">
+                        <div class="cell merged" style="text-align:center">Marker [ ${index+1} ]</div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Latitude</div>
+                        <div class="col2">${lat}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Longitude</div>
+                        <div class="col2">${lng}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Left click</div>
+                        <div class="col2">New marker / show popup</div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Right click</div>
+                        <div class="col2">Delete marker</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        addMarker = function(latlng, index) {
+            var marker = L.marker(latlng, {
+                icon: myIcon,
+                draggable: true
+            }).addTo(mymap);
+
+            var popup = L.popup({
+                    offset: [0, -30]
+                })
+                .setLatLng(latlng);
+
+            marker.bindPopup(popup);
+
+            marker.on('click', function() {
+                popup.setLatLng(marker.getLatLng()),
+                    popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index));
+            });
+
+            marker.on('dragstart', function(event) {
+                isOnDrag = true;
+            });
+
+            marker.on('drag', function(event) {
+                popup.setLatLng(marker.getLatLng()),
+                    popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index));
+                marker.openPopup();
+            });
+
+            marker.on('dragend', function(event) {
+                setTimeout(function() {
+                    isOnDrag = false;
+                }, 500);
+            });
+
+            marker.on('contextmenu', function(event) {
+                markers.forEach(function(m, i) {
+                    if (marker == m) {
+                        m.removeFrom(mymap);
+                        markers.splice(i, 1);
+                        mymap.zoomOut(); // Zoom out sedikit setelah menghapus marker
+                    }
+                });
+            });
+
+            return marker;
+        }
+
+        mymap.on('click', function(e) {
+            if (!isOnDrag) {
+                var newMarker = addMarker(e.latlng, markers.length);
+                markers.push(newMarker);
+            }
+        });
+
+        var btnKirim = document.getElementById('btnKirim');
+        btnKirim.addEventListener('click', function() {
+            var koordinat = markers.map(function(marker) {
+                return [marker.getLatLng().lat, marker.getLatLng().lng];
+            });
+
+            fetch("simpan.php", {
+                method: "POST",
+                body: JSON.stringify(koordinat),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(function(response) {
+                return response.json();
+            }).then(function(data) {
+                console.log(data);
+            }).catch(function(error) {
+                console.log(error);
+            });
+        });
+
+        fetch("baca.php").then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            data.forEach(function(c, i) {
+                let latlng = L.latLng(c[0], c[1]);
+                var newMarker = addMarker(latlng, markers.length);
+                markers.push(newMarker);
+            })
+        }).catch(function(error) {
+            console.log(error);
+        });
+
+        L.control.layers(baseLayers).addTo(mymap);
+
+        // Menambahkan event listener untuk zoom ke lokasi saat mengklik
+        mymap.on('click', function(e) {
+            mymap.setView(e.latlng, mymap.getZoom() + 1); // Melakukan zoom ke lokasi yang diklik
+        });
+    </script>
+</body>
+
+</html>
+<div><hr size=1></div><div><?php show_source(__FILE__);?></div>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contoh Peta Leaflet</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.js"></script>
+    <script src="https://leaflet.github.io/Leaflet.Editable/src/Leaflet.Editable.js"></script>
+    <script src="./Polyline.encoded.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+         <!-- Make sure you put this AFTER Leaflet's CSS -->
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""></script>    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <style>
+         html, body {
+            height: 100%;
+            margin-top: 50px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #map-container {
+            position: absolute;
+            top: 50px;
+            bottom: 0;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #mapid {
+            height: calc(100% - 80px);
+        }
+
+        .leaflet-popup-content {
+            width: 250px;
+            height: 100px;
+        }
+
+        .col {
+            float: left;
+            width: 50%;
+        }
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .navbar {
+            overflow: hidden;
+            background-color: #333; 
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1001;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd; 
+            color: black; 
+        }
+    </style>
+</head>
+<body style="height:100%; margin:0;">
+    <nav class="navbar">
+        <a href="/mapmarker">Map and Marker</a>
+        <a href="/moremarker">More Marker</a>
+        <a href="/markercluster">Marker Cluster</a>
+        <a href="/polyline">Polyline</a>
+        <a href="/routing">Routing</a>
+    </nav>
+    <div id="map-container">
+        <div id="mapid"></div>
+    </div>    
+    <button id="btnKirim">Simpan</button>
+
+    <script>
+        // http://leaflet.github.io/Leaflet.Editable/
+        // https://github.com/makinacorpus/Leaflet.Snap/
+        // https://github.com/jieter/Leaflet.encoded
+
+        // Menampilkan peta
+        var mymap = L.map('mapid',{editable: true}).setView([-8.5330242817551,115.21276982331896], 12);
+
+        // Menambahkan layer peta
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+            maxZoom: 18,
+        }).addTo(mymap);
+
+        // Polyline
+        var polyline = L.polyline([], {color: 'red'}).addTo(mymap);
+        
+        // Disable remove node on left mouse click
+        polyline.on('editable:vertex:click', function(event) {
+            //event.cancel();
+        });
+
+        // Remove node on right mouse click
+        polyline.on('editable:vertex:contextmenu', function(event) {            
+            var latlngs = event.layer.getLatLngs();
+            var index = latlngs.findIndex(function(latlng) {
+                return latlng.lat === event.latlng.lat && latlng.lng === event.latlng.lng;
+            });
+            latlngs.splice(index, 1);
+            event.layer.setLatLngs(latlngs);
+            polyline.editor.reset();
+            console.log(polylineToJson(polyline.getLatLngs())); // Output string JSON
+            console.log(polyline.encodePath());      
+        });
+
+        polylineToJson = (latLangs)=>{
+            var jsonArray = latLangs.map(function(latlng) {
+                return [latlng.lat,latlng.lng];
+            });
+            //
+            var jsonString = JSON.stringify(jsonArray);
+            return jsonString;
+        }
+
+        // Tambahkan event listener click pada peta
+        mymap.on('click', function(e) {
+            // Polyline
+            polyline.addLatLng(e.latlng);
+            polyline.editor.reset();
+            //
+            console.log(polylineToJson(polyline.getLatLngs())); // Output string JSON
+            console.log(polyline.encodePath()); 
+        });
+
+        var btnKirim = document.getElementById('btnKirim');
+        btnKirim.addEventListener('click',function(){
+            // Ambil koordinat masing-masing marker dan simpan ke dalam array koordinat
+            var koordinat = polylineToJson(polyline.getLatLngs());
+
+            // Kirim data ke server dalam format JSON menggunakan method fetch()
+            fetch("simpan.php", {
+                method: "POST",
+                body: koordinat,
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                console.log(data);
+            })
+            .catch(function(error) {
+                console.log(error);
+            });
+        });
+
+        // Ambil data dari server dalam format JSON menggunakan method fetch()
+        fetch("baca.php").then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                //polyline.enableEdit();
+                data.forEach(function(c,i){
+                    let latlng = L.latLng(c[0], c[1]);                    
+                    polyline.addLatLng(latlng);
+                })
+                polyline.enableEdit();
+                polyline.editor.reset();  
+                console.log(polyline.encodePath());              
+            })
+            
+            .catch(function(error) {
+                console.log(error);
+            });
+        
+    </script>
+</body>
+</html>
+<div><hr size=1></div><div><?php show_source(__FILE__);?></div>

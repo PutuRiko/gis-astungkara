@@ -1,0 +1,36 @@
+<!-- https://www.liedman.net/leaflet-routing-machine/tutorials/basic-usage/ -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Leaflet Routing Machine Example</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <link rel="stylesheet" href="leaflet-routing-machine.css" />
+    <style>
+        .map {
+            height: 500px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map" class="map"></div>
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+    <script src="leaflet-routing-machine.js"></script>
+    <script>
+        var map = L.map('map');
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.Routing.control({
+            waypoints: [
+                L.latLng(-8.523760814100195, 115.21073223010504),
+                L.latLng(-8.796295620586948, 115.17598429035017)
+            ],
+            routeWhileDragging: true
+        }).addTo(map);
+    </script>
+</body>
+</html>
+<div><hr size=1></div><div><?php show_source(__FILE__);?></div>
