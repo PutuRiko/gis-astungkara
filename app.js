@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require("mysql");
-//const cors = require("cors")
+const cors = require("cors")
 
 const app = express()
 const port = 3000
@@ -31,12 +31,12 @@ app.get('/routing', (req, res) => {
     res.sendFile('./routing.html', {root: __dirname});
   });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+// app.listen(port, () => {
+//   console.log(`Example app listening on port ${port}`)
+// })
 
 
-//konek ke database sql
+// konek ke database sql
 const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
