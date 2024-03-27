@@ -86,22 +86,18 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.js"></script>
     <script>
-        // Menampilkan peta
         var mymap = L.map('mapid').setView([-8.4095188, 115.188919], 11);
 
-        // Menambahkan layer peta default
         var defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
             maxZoom: 18,
         }).addTo(mymap);
 
-        // Menambahkan layer peta satelit
         var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
             maxZoom: 20,
             subdomains:['mt0','mt1','mt2','mt3']
         });
 
-        // Grup layer untuk jenis peta
         var baseLayers = {
             "Default": defaultLayer,
             "Satelit": satelliteLayer
@@ -112,26 +108,22 @@
         L.control.layers(baseLayers).addTo(mymap);
 
         var myIcon = L.icon({
-            iconUrl: 'image.png',
+            iconUrl: '3d-map.png',
             iconSize: [40, 40],
             iconAnchor: [20, 40],
         });
 
-        // Menambahkan marker
         var marker = L.marker([-8.4095188, 115.188919], {
             icon: myIcon,
             draggable: true
         }).addTo(mymap);
 
-        // Membuat popup baru
         var popup = L.popup({ offset: [0, -30] })
             .setLatLng(marker.getLatLng())
             .setContent('Ini adalah marker di Bali!');
 
-        // Binding popup ke marker
         marker.bindPopup(popup);
 
-        // Format popup content
         formatContent = function (lat, lng) {
             return `
                 <div class="wrapper">
@@ -150,13 +142,11 @@
             `;
         }
 
-        // Menambahkan event listener pada marker
         marker.on('click', function () {
             popup.setLatLng(marker.getLatLng()),
                 popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng));
         });
 
-        // Menambahkan event listener pada marker
         marker.on('drag', function (event) {
             popup.setLatLng(marker.getLatLng()),
                 popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng));

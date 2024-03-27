@@ -33,13 +33,14 @@
         }
 
         .leaflet-popup-content {
-            width: 300px; /* Lebar pop-up */
-            height: 200px; /* Tinggi pop-up */
+            width: 300px; 
+            height: 200px; 
+            overflow: auto;
         }
 
         .col {
             display: inline-block;
-            width: calc(33.33% - 10px); /* Lebar setiap field input */
+            width: calc(33.33% - 10px);
             margin-right: 10px;
             margin-bottom: 10px;
         }
@@ -76,7 +77,7 @@
         #btnKirim {
             position: absolute;
             bottom: -50px;
-            right: 20px; /* Penyesuaian posisi ke kanan */
+            right: 20px; 
             margin-bottom: 10px;
             z-index: 1001;
         }
@@ -95,7 +96,7 @@
     <div id="map-container">
         <div id="mapid"></div>
 
-        <!-- Form Input -->
+
         <div id="inputForm">
             <input type="text" id="namaRS" name="namaRS" placeholder="Nama RS" class="col">
             <input type="text" id="latitude" name="latitude" placeholder="Latitude" class="col">
@@ -209,8 +210,7 @@
                     if (marker == m) {
                         m.removeFrom(mymap);
                         markers.splice(i, 1);
-                        mymap.zoomOut(); // Zoom out sedikit setelah menghapus marker
-                    }
+                        mymap.zoomOut();                     }
                 });
             });
 
@@ -232,14 +232,13 @@
             var longitude = document.getElementById('longitude').value;
             var alamatRS = document.getElementById('alamatRS').value;
 
-            // Kirim data ke server
             var data = {
                 nama_rs: namaRS,
-                latlng_rs: latitude + ',' + longitude, // Gabungkan latitude dan longitude menjadi satu string
+                latlng_rs: latitude + ',' + longitude,
                 alamat_rs: alamatRS
             };
 
-            fetch("/process", { // Ubah ke endpoint '/process' yang ditentukan di server
+            fetch("/process", { 
                 method: "POST",
                 body: JSON.stringify(data),
                 headers: {
@@ -254,11 +253,11 @@
             });
         });
 
-        fetch("/getData").then(function(response) { // Ubah ke endpoint '/getData' yang ditentukan di server
+        fetch("/getData").then(function(response) { 
             return response.json();
         }).then(function(data) {
             data.forEach(function(c, i) {
-                var latlng = L.latLng(c.latlng_rs.split(',')[0], c.latlng_rs.split(',')[1]); // Pisahkan latitude dan longitude
+                var latlng = L.latLng(c.latlng_rs.split(',')[0], c.latlng_rs.split(',')[1]); 
                 var randomHospitalName = hospitalNames[Math.floor(Math.random() * hospitalNames.length)];
                 var newMarker = addMarker(latlng, markers.length, randomHospitalName);
                 markers.push(newMarker);
@@ -269,7 +268,7 @@
 
         L.control.layers(baseLayers).addTo(mymap);
 
-        // Menambahkan event listener untuk zoom ke lokasi saat mengklik
+        
         mymap.on('click', function(e) {
             mymap.setView(e.latlng, mymap.getZoom() + 1); // Melakukan zoom ke lokasi yang diklik
         });
