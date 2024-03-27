@@ -23,26 +23,27 @@
         }
 
         #map-container {
-            position: absolute;
-            top: 50px;
-            bottom: 0;
+            position: relative;
             width: 100%;
-            overflow: hidden;
+            height: calc(100% - 150px); /* Tinggi peta disesuaikan agar form input dan tombol tidak tumpang tindih */
         }
 
         #mapid {
-            height: calc(100% - 80px);
+            height: 100%;
         }
 
         .leaflet-popup-content {
-            width: 250px;
-            height: 100px;
+            width: 300px; /* Lebar pop-up */
+            height: 200px; /* Tinggi pop-up */
         }
 
         .col {
-            float: left;
-            width: 50%;
+            display: inline-block;
+            width: calc(33.33% - 10px); /* Lebar setiap field input */
+            margin-right: 10px;
+            margin-bottom: 10px;
         }
+
         .row:after {
             content: "";
             display: table;
@@ -71,6 +72,14 @@
             background-color: #ddd; 
             color: black; 
         }
+
+        #btnKirim {
+            position: absolute;
+            bottom: -50px;
+            right: 20px; /* Penyesuaian posisi ke kanan */
+            margin-bottom: 10px;
+            z-index: 1001;
+        }
     </style>
 </head>
 
@@ -85,8 +94,16 @@
     </nav>
     <div id="map-container">
         <div id="mapid"></div>
+
+        <!-- Form Input -->
+        <div id="inputForm">
+            <input type="text" id="namaRS" name="namaRS" placeholder="Nama RS" class="col">
+            <input type="text" id="latitude" name="latitude" placeholder="Latitude" class="col">
+            <input type="text" id="longitude" name="longitude" placeholder="Longitude" class="col">
+            <input type="text" id="alamatRS" name="alamatRS" placeholder="Alamat RS" class="col">
+        </div>
+        <button id="btnKirim">Simpan</button>
     </div>
-    <button id="btnKirim">Simpan</button>
 
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.js"></script>
     <script>
@@ -116,11 +133,23 @@
             iconAnchor: [20, 40],
         });
 
-        formatContent = function(lat, lng, index) {
+        var hospitalNames = [
+            "Rumah Sakit Riko",
+            "Rumah Sakit Puri Raharja",
+            "Rumah Sakit Trijata",
+            "Rumah Sakit Dharma Yadnya",
+            "Rumah Sakit Sanglah"
+        ];
+
+        formatContent = function(lat, lng, index, hospitalName) {
             return `
                 <div class="wrapper">
                     <div class="row">
                         <div class="cell merged" style="text-align:center">Marker [ ${index+1} ]</div>
+                    </div>
+                    <div class="row">
+                        <div class="col">Nama Rumah Sakit</div>
+                        <div class="col2">${hospitalName}</div>
                     </div>
                     <div class="row">
                         <div class="col">Latitude</div>
@@ -142,22 +171,21 @@
             `;
         }
 
-        addMarker = function(latlng, index) {
+        addMarker = function(latlng, index, hospitalName) {
             var marker = L.marker(latlng, {
                 icon: myIcon,
                 draggable: true
             }).addTo(mymap);
 
-            var popup = L.popup({
-                    offset: [0, -30]
-                })
-                .setLatLng(latlng);
+            var popup  = L.popup({
+                offset: [0, -30]
+            }).setLatLng(latlng);
 
             marker.bindPopup(popup);
 
             marker.on('click', function() {
-                popup.setLatLng(marker.getLatLng()),
-                    popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index));
+                popup.setLatLng(marker.getLatLng());
+                popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index, hospitalName));
             });
 
             marker.on('dragstart', function(event) {
@@ -165,8 +193,8 @@
             });
 
             marker.on('drag', function(event) {
-                popup.setLatLng(marker.getLatLng()),
-                    popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index));
+                popup.setLatLng(marker.getLatLng());
+                popup.setContent(formatContent(marker.getLatLng().lat, marker.getLatLng().lng, index, hospitalName));
                 marker.openPopup();
             });
 
@@ -191,20 +219,29 @@
 
         mymap.on('click', function(e) {
             if (!isOnDrag) {
-                var newMarker = addMarker(e.latlng, markers.length);
+                var randomHospitalName = hospitalNames[Math.floor(Math.random() * hospitalNames.length)];
+                var newMarker = addMarker(e.latlng, markers.length, randomHospitalName);
                 markers.push(newMarker);
             }
         });
 
         var btnKirim = document.getElementById('btnKirim');
         btnKirim.addEventListener('click', function() {
-            var koordinat = markers.map(function(marker) {
-                return [marker.getLatLng().lat, marker.getLatLng().lng];
-            });
+            var namaRS = document.getElementById('namaRS').value;
+            var latitude = document.getElementById('latitude').value;
+            var longitude = document.getElementById('longitude').value;
+            var alamatRS = document.getElementById('alamatRS').value;
 
-            fetch("simpan.php", {
+            // Kirim data ke server
+            var data = {
+                nama_rs: namaRS,
+                latlng_rs: latitude + ',' + longitude, // Gabungkan latitude dan longitude menjadi satu string
+                alamat_rs: alamatRS
+            };
+
+            fetch("/process", { // Ubah ke endpoint '/process' yang ditentukan di server
                 method: "POST",
-                body: JSON.stringify(koordinat),
+                body: JSON.stringify(data),
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -217,12 +254,13 @@
             });
         });
 
-        fetch("baca.php").then(function(response) {
+        fetch("/getData").then(function(response) { // Ubah ke endpoint '/getData' yang ditentukan di server
             return response.json();
         }).then(function(data) {
             data.forEach(function(c, i) {
-                let latlng = L.latLng(c[0], c[1]);
-                var newMarker = addMarker(latlng, markers.length);
+                var latlng = L.latLng(c.latlng_rs.split(',')[0], c.latlng_rs.split(',')[1]); // Pisahkan latitude dan longitude
+                var randomHospitalName = hospitalNames[Math.floor(Math.random() * hospitalNames.length)];
+                var newMarker = addMarker(latlng, markers.length, randomHospitalName);
                 markers.push(newMarker);
             })
         }).catch(function(error) {
@@ -239,4 +277,3 @@
 </body>
 
 </html>
-<div><hr size=1></div><div><?php show_source(__FILE__);?></div>
