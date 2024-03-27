@@ -95,24 +95,19 @@
         // https://github.com/makinacorpus/Leaflet.Snap/
         // https://github.com/jieter/Leaflet.encoded
 
-        // Menampilkan peta
         var mymap = L.map('mapid',{editable: true}).setView([-8.5330242817551,115.21276982331896], 12);
 
-        // Menambahkan layer peta
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
             maxZoom: 18,
         }).addTo(mymap);
 
-        // Polyline
         var polyline = L.polyline([], {color: 'red'}).addTo(mymap);
         
-        // Disable remove node on left mouse click
         polyline.on('editable:vertex:click', function(event) {
             //event.cancel();
         });
 
-        // Remove node on right mouse click
         polyline.on('editable:vertex:contextmenu', function(event) {            
             var latlngs = event.layer.getLatLngs();
             var index = latlngs.findIndex(function(latlng) {
@@ -121,7 +116,7 @@
             latlngs.splice(index, 1);
             event.layer.setLatLngs(latlngs);
             polyline.editor.reset();
-            console.log(polylineToJson(polyline.getLatLngs())); // Output string JSON
+            console.log(polylineToJson(polyline.getLatLngs()));
             console.log(polyline.encodePath());      
         });
 
@@ -129,27 +124,23 @@
             var jsonArray = latLangs.map(function(latlng) {
                 return [latlng.lat,latlng.lng];
             });
-            //
+            
             var jsonString = JSON.stringify(jsonArray);
             return jsonString;
         }
 
-        // Tambahkan event listener click pada peta
         mymap.on('click', function(e) {
-            // Polyline
             polyline.addLatLng(e.latlng);
             polyline.editor.reset();
-            //
-            console.log(polylineToJson(polyline.getLatLngs())); // Output string JSON
+            
+            console.log(polylineToJson(polyline.getLatLngs())); 
             console.log(polyline.encodePath()); 
         });
 
         var btnKirim = document.getElementById('btnKirim');
         btnKirim.addEventListener('click',function(){
-            // Ambil koordinat masing-masing marker dan simpan ke dalam array koordinat
             var koordinat = polylineToJson(polyline.getLatLngs());
 
-            // Kirim data ke server dalam format JSON menggunakan method fetch()
             fetch("simpan.php", {
                 method: "POST",
                 body: koordinat,
@@ -167,7 +158,6 @@
             });
         });
 
-        // Ambil data dari server dalam format JSON menggunakan method fetch()
         fetch("baca.php").then(function(response) {
                 return response.json();
             })

@@ -111,7 +111,7 @@
         var isOnDrag = false;
 
         var myIcon = L.icon({
-            iconUrl: 'pin.png',
+            iconUrl: '3d-map.png',
             iconSize: [40, 40],
             iconAnchor: [20, 40],
         });
@@ -181,7 +181,7 @@
                     if (marker == m) {
                         m.removeFrom(mymap);
                         markers.splice(i, 1);
-                        mymap.zoomOut(); // Zoom out sedikit setelah menghapus marker
+                        mymap.zoomOut(); 
                     }
                 });
             });
@@ -231,9 +231,8 @@
 
         L.control.layers(baseLayers).addTo(mymap);
 
-        // Menambahkan event listener untuk zoom ke lokasi saat mengklik
         mymap.on('click', function(e) {
-            mymap.setView(e.latlng, mymap.getZoom() + 1); // Melakukan zoom ke lokasi yang diklik
+            mymap.setView(e.latlng, mymap.getZoom() + 1);
         });
     </script>
 </body>

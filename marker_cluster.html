@@ -91,39 +91,30 @@
     <button id="btnKirim">Simpan</button>
 
     <script>
-        //
-        // Menampilkan peta
         var mymap = L.map('mapid').setView([-8.4095188,115.188919], 11);
 
-        // Menambahkan layer peta
         var defaultLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
             maxZoom: 18,
         }).addTo(mymap);
 
-        // Menambahkan layer peta satelit
         var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
             maxZoom: 20,
             subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
         });
 
-        // Array markers
         var markers = [];
 
-        // Marker cluster
         var markerClusters = L.markerClusterGroup().addTo(mymap);        
 
-        // Is On Drag
         var isOnDrag = false;
 
-        // Membuat icon dari gambar PNG
         var myIcon = L.icon({
-            iconUrl: 'pin.png',
+            iconUrl: '3d-map.png',
             iconSize: [40, 40],
             iconAnchor: [20, 40],
         });
 
-        // Format popup content
         formatContent = function(lat, lng, index){
             return `
                 <div class="wrapper">
@@ -152,24 +143,20 @@
 
         addMarker =  function(latlng,index){
 
-            // Menambahkan marker
             var marker = L.marker(latlng,{
                 icon: myIcon,
                 draggable: true
             });
 
-            // Membuat popup baru
             var popup = L.popup({ offset: [0, -30]})
                 .setLatLng(latlng);
             
-            // Binding popup ke marker
             marker.bindPopup(popup);
 
-            // Menambahkan event listener pada marker
             marker.on('click', function(e) {
-                if (e.originalEvent.button === 0) { // Klik kiri
-                    mymap.setView(e.target.getLatLng(), mymap.getZoom() + 1); // Zoom in sedikit saat menambahkan marker
-                } else if (e.originalEvent.button === 2) { // Klik kanan
+                if (e.originalEvent.button === 0) { 
+                    mymap.setView(e.target.getLatLng(), mymap.getZoom() + 1); 
+                } else if (e.originalEvent.button === 2) { 
                     popup.setLatLng(marker.getLatLng()),
                     popup.setContent(formatContent(marker.getLatLng().lat,marker.getLatLng().lng,index));
                 }
@@ -179,7 +166,6 @@
                 isOnDrag = true;
             });
 
-            // Menambahkan event listener pada marker
             marker.on('drag', function(event) {
                 popup.setLatLng(marker.getLatLng()),
                 popup.setContent(formatContent(marker.getLatLng().lat,marker.getLatLng().lng,index));
@@ -193,40 +179,31 @@
             });
 
             marker.on('contextmenu', function(event) {
-                // Hapus marker dari peta dan cluster
                 mymap.removeLayer(marker);
                 markerClusters.removeLayer(marker);
-                // Hapus marker dari array markers
                 markers.splice(markers.indexOf(marker), 1);
             });
 
-            // Return marker
             return marker;
         }
 
-        // Tambahkan event listener click pada peta
         mymap.on('click', function(e) {
             console.log(isOnDrag);
             if(!isOnDrag){
-                // Buat marker baru
                 var newMarker = addMarker(e.latlng,markers.length);
                 
-                // Tambahkan marker ke array markers
                 markers.push(newMarker);
 
-                // Tambahkan ke markercluster
                 markerClusters.addLayer(newMarker);
             }
         });
 
         var btnKirim = document.getElementById('btnKirim');
         btnKirim.addEventListener('click',function(){
-            // Ambil koordinat masing-masing marker dan simpan ke dalam array koordinat
             var koordinat = markers.map(function(marker) {
                 return [marker.getLatLng().lat, marker.getLatLng().lng];
             });
 
-            // Kirim data ke server dalam format JSON menggunakan method fetch()
             fetch("simpan.php", {
                 method: "POST",
                 body: JSON.stringify(koordinat),
@@ -244,9 +221,7 @@
             });
         });
 
-        // Ambil data dari server dalam format JSON menggunakan method fetch()
         fetch("baca.php").then(function(response) {
-                // return response.text();
                 return response.json();
             })
             .then(function(data) {
@@ -254,7 +229,6 @@
                     let latlng = L.latLng(c[0], c[1]);
                     var newMarker = addMarker(latlng,markers.length);
                     markers.push(newMarker);
-                    // Tambahkan ke markercluster
                     markerClusters.addLayer(newMarker);
                 })
             })
@@ -262,13 +236,11 @@
                 console.log(error);
             });
 
-        // Grup layer untuk jenis peta
         var baseLayers = {
             "Default": defaultLayer,
             "Satelit": satelliteLayer
         };
 
-        // Menambahkan kontrol layer
         L.control.layers(baseLayers).addTo(mymap);
 
     </script>
